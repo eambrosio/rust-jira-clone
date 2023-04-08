@@ -1,3 +1,5 @@
+# JIRA CLI
+
 This is a Rust-based Jira clone for the terminal
 
 It's compound by two primary features in Jira:
