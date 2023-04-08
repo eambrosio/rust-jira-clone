@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::rc::Rc;
 
 use anyhow::anyhow;
@@ -13,6 +14,7 @@ use page_helpers::*;
 pub trait Page {
     fn draw_page(&self) -> Result<()>;
     fn handle_input(&self, input: &str) -> Result<Option<Action>>;
+    fn as_any(&self) -> &dyn Any;
 }
 
 pub struct HomePage {
@@ -20,8 +22,8 @@ pub struct HomePage {
 }
 impl Page for HomePage {
     fn draw_page(&self) -> Result<()> {
-        println!("----------------------------- EPICS ------------------------------");
-        println!("     id     |               name               |      status      ");
+        println!("----------------------------- EPICS -------------------------------");
+        println!("     id     |               name                |      status      ");
 
         let epics = self.db.read_db()?.epics;
 
@@ -58,6 +60,10 @@ impl Page for HomePage {
             }
         }
     }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct EpicDetail {
@@ -73,13 +79,13 @@ impl Page for EpicDetail {
             .get(&self.epic_id)
             .ok_or_else(|| anyhow!("could not find epic!"))?;
 
-        println!("------------------------------ EPIC ------------------------------");
-        println!("  id  |     name     |         description         |    status    ");
+        println!("------------------------------ EPIC --------------------------------");
+        println!("  id   |     name     |         description          |    status    ");
 
         let id_col = get_column_string(&self.epic_id.to_string(), 5);
         let name_col = get_column_string(&epic.name, 12);
-        let description_col = &epic.description;
-        let status_col = &&epic.status.to_string();
+        let description_col = get_column_string(&epic.description, 28);
+        let status_col = get_column_string(&epic.status.to_string(), 13);
 
         println!(
             " {} | {} | {} | {} ",
@@ -88,12 +94,12 @@ impl Page for EpicDetail {
 
         println!();
 
-        println!("---------------------------- STORIES ----------------------------");
-        println!("     id     |               name               |      status      ");
+        println!("------------------------------ STORIES ----------------------------");
+        println!("     id      |               name               |      status      ");
 
         let stories = &db_state.stories;
 
-        for id in stories.keys().sorted() {
+        for id in epic.stories.iter().sorted() {
             let id_col = get_column_string(&id.to_string(), 11);
             let name_col = get_column_string(&stories[id].name, 32);
             let status_col = get_column_string(&stories[id].status.to_string(), 17);
@@ -135,6 +141,10 @@ impl Page for EpicDetail {
                 Ok(None)
             }
         }
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -185,6 +195,10 @@ impl Page for StoryDetail {
             })),
             _ => Ok(None),
         }
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
